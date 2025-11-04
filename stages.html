@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stages — Retro Arcade 80s (Participación por integrante)</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#04102a;--panel:#061632;--neon-cyan:#00f0ff;--neon-mag:#ff4dd2;--muted:#9fb4d8}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,Arial;background:var(--bg);color:#e6f7ff}
+body::before{content:"";position:fixed;inset:0;background-image:
+linear-gradient(0deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+background-size:4px 4px,4px 4px;mix-blend-mode:overlay;opacity:0.7;pointer-events:none}
+.wrap{max-width:1180px;margin:18px auto;display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start;padding:14px}
+h1{font-family:'Press Start 2P';color:var(--neon-cyan);font-size:18px;margin:0}
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;border:2px solid rgba(0,240,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+.btn{padding:10px;border-radius:8px;border:0;cursor:pointer;font-weight:800;font-family:'Press Start 2P';font-size:12px}
+.btn-primary{background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#041025}
+.btn-ghost{background:transparent;border:2px solid rgba(255,255,255,0.03);color:var(--muted)}
+.week{margin-bottom:12px}
+.adv{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-top:6px;display:flex;justify-content:space-between;align-items:center}
+.adv.locked{opacity:0.4;filter:grayscale(0.5)}
+.adv.completed{background:rgba(0,240,255,0.08)}
+.toast{position:fixed;top:18px;right:18px;padding:10px 14px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#041025;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.6);font-size:12px;font-weight:800;z-index:9999}
+.avatar-small{width:64px;height:64px;border-radius:8px;overflow:hidden;display:inline-block}
+.avatar-small img{width:64px;height:64px;image-rendering:pixelated;display:block}
+
+/* modal codes-by-members (for entering codes) */
+#memberModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:9999}
+#memberModal .box{background:#061835;padding:18px;border-radius:10px;border:2px solid rgba(0,240,255,0.15);width:360px;max-height:80vh;overflow:auto}
+#memberModal h3{font-family:'Press Start 2P';font-size:13px;color:var(--neon-mag);margin:0 0 8px;text-align:center}
+#memberModal .member-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+#memberModal input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+#memberModal .close{position:absolute;top:12px;right:18px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1>★ STAGES — PARTICIPACIÓN POR INTEGRANTE</h1>
+      <div style="color:var(--muted);font-size:12px;margin-top:6px">6 semanas × 5 avances (Lunes–Viernes). Cada integrante ingresa su código individual para ganar estrellas.</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="exportPdfBtn" class="btn btn-primary">EXPORTAR PDF</button>
+      <button id="logoutBtn" class="btn btn-ghost">CERRAR SESIÓN</button>
+    </div>
+  </header>
+
+  <main class="panel" id="mainPanel">
+    <div id="notFound" style="display:none;color:var(--muted)">Equipo no seleccionado — vuelve al lobby.</div>
+
+    <div id="teamArea" style="display:none">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <div class="avatar-small" id="avatarBox"><img src="avatars/avatar1.png" alt="avatar"></div>
+        <div style="flex:1">
+          <div id="teamName" style="font-weight:900;font-size:16px;color:var(--neon-cyan)"></div>
+          <div id="teamMembers" style="color:var(--muted);font-size:13px;margin-top:6px"></div>
+          <div style="margin-top:8px;font-size:12px" id="teamProgress"></div>
+        </div>
+      </div>
+
+      <div id="weeksContainer"></div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+        <button id="saveBtn" class="btn btn-primary">GUARDAR</button>
+        <button id="resetBtn" class="btn btn-ghost">RESETEAR</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="panel">
+    <div style="font-weight:900;color:var(--neon-mag)">REGLAS</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:8px">Para completar un avance el equipo debe alcanzar el 60% de integrantes participando (redondeado arriba).</div>
+    <ul style="color:var(--muted);margin-top:6px">
+      <li>Cada integrante ingresa su código individual por avance.</li>
+      <li>El número de estrellas = integrantes que ingresaron correctamente.</li>
+      <li>El docente puede ver/regenerar códigos desde su panel.</li>
+    </ul>
+  </aside>
+
+  <div style="grid-column:1/-1;text-align:center;color:var(--muted);margin-top:12px">Estilo: Retro Arcade 80s</div>
+</div>
+
+<!-- Modal: member codes entry -->
+<div id="memberModal">
+  <div class="box">
+    <button class="close" id="memberClose">✕</button>
+    <h3 id="memberModalTitle">Ingresar códigos</h3>
+    <div id="memberList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+      <button id="memberConfirm" class="btn btn-primary">Confirmar</button>
+      <button id="memberCancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Config ===== */
+const STORAGE_KEY='aula_gamificada_teams_v1';
+const SELECTED_KEY='aula_gamificada_selected';
+const WEEKS=6, PER_WEEK=5;
+
+/* ===== Utils ===== */
+function loadTeams(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){return []} }
+function saveTeams(t){ localStorage.setItem(STORAGE_KEY,JSON.stringify(t)) }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>{ t.style.transition='all .3s ease'; t.style.opacity=0; t.style.transform='translateY(-10px)'; },1200); setTimeout(()=>t.remove(),1800); }
+
+/* ===== Audio (level-up) and unlock on first click ===== */
+const audioCtx = (() => { try{ return new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; } })();
+function playLevelUp(){
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [880,1047,1319].forEach((f,i)=>{
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type='square'; o.frequency.setValueAtTime(f, now + i*0.08);
+    g.gain.setValueAtTime(0, now + i*0.08);
+    g.gain.linearRampToValueAtTime(0.15, now + i*0.09);
+    g.gain.exponentialRampToValueAtTime(0.001, now + i*0.25);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now + i*0.08); o.stop(now + i*0.25);
+  });
+}
+document.body.addEventListener('click', ()=>{ if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }, { once:true });
+
+/* ===== Init & data load ===== */
+const selectedId = localStorage.getItem(SELECTED_KEY);
+if(!selectedId){ location.href = 'index.html'; throw new Error('No session'); }
+let teams = loadTeams();
+let team = teams.find(t => t.id === selectedId);
+if(!team){ location.href = 'index.html'; throw new Error('Team missing'); }
+if(!team.codesIndividuales){
+  // fallback: generate simple codes if missing (shouldn't happen)
+  team.codesIndividuales = {};
+  for(let w=1; w<=WEEKS; w++){
+    const wk = 'Semana'+w;
+    team.codesIndividuales[wk] = {};
+    for(let d=0; d<PER_WEEK; d++){
+      const day = ['Lunes','Martes','Miércoles','Jueves','Viernes'][d];
+      team.codesIndividuales[wk][day] = {};
+      team.members.forEach(m => team.codesIndividuales[wk][day][m] = String(Math.floor(1000+Math.random()*9000)));
+    }
+  }
+  saveTeams(teams);
+}
+if(!team.avatar) team.avatar = 'avatars/avatar1.png';
+
+/* ===== DOM refs ===== */
+const teamArea = document.getElementById('teamArea');
+const notFound = document.getElementById('notFound');
+const teamNameEl = document.getElementById('teamName');
+const teamMembersEl = document.getElementById('teamMembers');
+const teamProgressEl = document.getElementById('teamProgress');
+const weeksContainer = document.getElementById('weeksContainer');
+const avatarBox = document.getElementById('avatarBox');
+const memberModal = document.getElementById('memberModal');
+const memberList = document.getElementById('memberList');
+const memberModalTitle = document.getElementById('memberModalTitle');
+const memberClose = document.getElementById('memberClose');
+const memberCancel = document.getElementById('memberCancel');
+const memberConfirm = document.getElementById('memberConfirm');
+
+/* helper: required participants (60% rounded up) */
+function requiredParticipants(n) { return Math.ceil(n * 0.6); }
+
+/* render weeks/days with stars */
+function render(){
+  teams = loadTeams();
+  team = teams.find(t=>t.id===selectedId);
+  if(!team) { notFound.style.display='block'; teamArea.style.display='none'; return; }
+  notFound.style.display='none'; teamArea.style.display='block';
+  teamNameEl.textContent = team.name;
+  teamMembersEl.textContent = (team.members||[]).join(' · ') || 'Sin miembros';
+  // compute total stars (sum of stars of completed days)
+  let totalStars = 0, totalPossible = 0;
+  team.weeks.forEach(w=>{
+    w.days.forEach(d=>{
+      totalStars += (d.stars||0);
+      totalPossible += (team.members||[]).length;
+    });
+  });
+  teamProgressEl.textContent = `Estrellas: ${totalStars} / ${totalPossible}`;
+
+  avatarBox.innerHTML = `<img src="${team.avatar}" alt="avatar">`;
+
+  weeksContainer.innerHTML = '';
+  for(let w=0; w<WEEKS; w++){
+    const weekDiv = document.createElement('div'); weekDiv.className='panel week';
+    weekDiv.innerHTML = `<div style="font-family:'Press Start 2P';font-size:12px;color:var(--neon-mag)">SEMANA ${w+1}</div>`;
+    const advWrap = document.createElement('div');
+    const weekObj = team.weeks[w];
+    const unlockedWeek = (w===0) ? true : team.weeks[w-1].days.every(d=>d.completed);
+    for(let a=0; a<PER_WEEK; a++){
+      const dayObj = weekObj.days[a];
+      const done = dayObj.completed;
+      const unlocked = unlockedWeek && (a===0 ? true : weekObj.days[a-1].completed);
+      const stars = dayObj.stars || 0;
+      const maxStars = team.members.length;
+      const adv = document.createElement('div');
+      adv.className = 'adv' + (done ? ' completed' : '') + (unlocked ? '' : ' locked');
+      const dayName = ['Lunes','Martes','Miércoles','Jueves','Viernes'][a];
+      adv.innerHTML = `<div>${dayName} <span style="margin-left:8px;color:var(--muted);font-size:11px">${'★'.repeat(stars)}${'☆'.repeat(maxStars-stars)}</span></div>
+                       <div><button class="btn ${done?'btn-ghost':'btn-primary'}" ${!unlocked?'disabled':''}>${done? 'Completado' : 'Marcar'}</button></div>`;
+      if(unlocked && !done){
+        adv.querySelector('button').onclick = ()=> openMemberModal(w,a);
+      }
+      advWrap.appendChild(adv);
+    }
+    weekDiv.appendChild(advWrap);
+    weeksContainer.appendChild(weekDiv);
+  }
+}
+
+/* ===== Member modal: enter codes for each member for week w, day a ===== */
+let modalContext = null; // {w,a}
+function openMemberModal(w,a){
+  modalContext = {w,a};
+  memberModalTitle.textContent = `Semana ${w+1} — ${['Lunes','Martes','Miércoles','Jueves','Viernes'][a]}`;
+  memberList.innerHTML = '';
+  const members = team.members || [];
+  const codes = team.codesIndividuales['Semana'+(w+1)][['Lunes','Martes','Miércoles','Jueves','Viernes'][a]];
+  // build input rows
+  members.forEach(m=>{
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;background:#061635"><img src="${team.avatar}" style="width:36px;height:36px;image-rendering:pixelated"></div>
+      <div style="flex:1">${m}</div>
+      <input data-member="${m}" placeholder="cód. 4 dígitos" />`;
+    memberList.appendChild(row);
+  });
+  memberModal.style.display = 'flex';
+  // focus first input
+  setTimeout(()=> memberList.querySelector('input')?.focus(), 80);
+}
+memberClose.onclick = memberCancel.onclick = ()=> { memberModal.style.display='none'; modalContext=null; }
+memberConfirm.onclick = ()=> {
+  if(!modalContext) return;
+  const {w,a} = modalContext;
+  const inputs = Array.from(memberList.querySelectorAll('input'));
+  const codesMap = team.codesIndividuales['Semana'+(w+1)][['Lunes','Martes','Miércoles','Jueves','Viernes'][a]];
+  const participation = {}; let correctCount=0;
+  inputs.forEach(inp=>{
+    const member = inp.getAttribute('data-member');
+    const val = (inp.value||'').trim();
+    if(val && val === String(codesMap[member])) { participation[member] = true; correctCount++; }
+    else participation[member] = false;
+  });
+  // store participation in team.weeks[w].days[a]
+  const dayObj = team.weeks[w].days[a];
+  dayObj.progress = participation;
+  dayObj.stars = correctCount;
+  const required = requiredParticipants(team.members.length);
+  dayObj.completed = (correctCount >= required);
+  // persist
+  saveTeams(teams);
+  memberModal.style.display = 'none';
+  modalContext = null;
+
+  // feedback
+  if(dayObj.completed){
+    // level-up check: calculate total stars to determine "level" (optional)
+    // We'll play sound and toast success.
+    if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume().then(()=>{ playLevelUp(); toast(`Avance completado — ${'★'.repeat(dayObj.stars)}`); }); }
+    else { playLevelUp(); toast(`Avance completado — ${'★'.repeat(dayObj.stars)}`); }
+  } else {
+    toast(`No alcanzaron el mínimo de participación (${required}). Estrellas: ${dayObj.stars}`);
+  }
+  render();
+};
+
+/* ===== Export PDF (list mode, includes stars) ===== */
+document.getElementById('exportPdfBtn').onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+  doc.setFontSize(14); doc.text('REPORTE DE PROGRESO — EQUIPO', 14, y); y += 8;
+  doc.setFontSize(11); doc.text(`Equipo: ${team.name}`, 14, y); y += 6;
+  doc.text(`Integrantes: ${(team.members||[]).join(', ')}`, 14, y); y += 6;
+  doc.text(`Fecha: ${new Date().toLocaleString()}`, 14, y); y += 8;
+  for(let w=0; w<WEEKS; w++){
+    doc.setFontSize(12); doc.text(`Semana ${w+1}`, 14, y); y += 6;
+    for(let a=0; a<PER_WEEK; a++){
+      const dayName = ['Lunes','Martes','Miércoles','Jueves','Viernes'][a];
+      const dayObj = team.weeks[w].days[a];
+      const stars = dayObj.stars || 0;
+      const maxStars = team.members.length;
+      const status = dayObj.completed ? 'Completado' : 'Pendiente';
+      doc.setFontSize(10); doc.text(`${dayName.padEnd(10)} ${'★'.repeat(stars)}${'☆'.repeat(maxStars-stars)} — ${status}`, 14, y); y += 6;
+      if(y > 270){ doc.addPage(); y = 20; }
+    }
+    y += 4;
+  }
+  doc.save(`progreso_${team.name.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
+};
+
+/* ===== Save / Reset / Logout ===== */
+document.getElementById('saveBtn').onclick = () => { saveTeams(teams); toast('Progreso guardado ✔'); };
+document.getElementById('resetBtn').onclick = () => {
+  if(!confirm('Resetear TODO el progreso del equipo?')) return;
+  // reset weeks
+  team.weeks = Array.from({length:WEEKS}).map(()=>({ days: Array.from({length:PER_WEEK}).map(()=>({progress:{},stars:0,completed:false})) }));
+  team.members.forEach(m => { team.pointsPerMember[m]=0; });
+  saveTeams(teams); render(); toast('Progreso reseteado.');
+};
+document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem(SELECTED_KEY); location.href = 'index.html'; };
+
+render();
+</script>
+</body>
+</html>

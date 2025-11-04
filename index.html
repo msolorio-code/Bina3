@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lobby — Registro / Login (Aula Gamificada)</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04102a;--neon-cyan:#00f0ff;--neon-mag:#ff4dd2;--muted:#9fb4d8}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,Arial;background:var(--bg);color:#e6f7ff}
+body::before{content:"";position:fixed;inset:0;background-image:
+linear-gradient(0deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+background-size:4px 4px,4px 4px;mix-blend-mode:overlay;opacity:0.7;pointer-events:none;}
+.container{max-width:980px;margin:28px auto;padding:18px;display:grid;grid-template-columns:1fr 420px;gap:18px}
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;border:2px solid rgba(0,240,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+h1{font-family:'Press Start 2P';color:var(--neon-cyan);font-size:18px;margin:0}
+.small{font-size:13px;color:var(--muted)}
+label{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
+input[type="text"], input[type="password"]{width:100%;padding:10px;border-radius:8px;border:2px solid rgba(255,255,255,0.03);background:transparent;color:inherit;margin-top:6px;font-size:14px}
+.btn{padding:10px;border-radius:8px;border:0;cursor:pointer;font-weight:800;font-family:'Press Start 2P';font-size:12px}
+.btn-primary{background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#041025}
+.btn-ghost{background:transparent;border:2px solid rgba(255,255,255,0.03);color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.error{color:#ff9aa2;margin-top:8px;font-weight:700}
+.hidden{display:none}
+.footer{grid-column:1/-1;text-align:center;margin-top:12px;color:var(--muted);font-size:12px}
+.admin-trigger{font-size:11px;color:var(--muted);margin-top:10px}
+
+/* Avatar grid (64x64) */
+.avatar-grid{display:grid;grid-template-columns:repeat(4,64px);gap:10px;margin-top:8px}
+.avatar-option{width:64px;height:64px;border-radius:8px;border:2px solid transparent;background:#0a1a3c;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.avatar-option img{width:64px;height:64px;image-rendering:pixelated;display:block}
+.avatar-option.selected{border-color:var(--neon-mag);box-shadow:0 6px 18px rgba(255,77,210,0.08);transform:scale(1.03)}
+
+/* ==== Modal docente overlay ==== */
+#adminOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:none;align-items:center;justify-content:center;z-index:9998}
+#adminModal{background:rgba(6,22,50,0.98);border:2px solid rgba(0,240,255,0.3);box-shadow:0 0 20px rgba(0,240,255,0.4);border-radius:12px;padding:20px;width:320px;position:relative;animation:fadeIn .2s ease-out}
+#adminModal h3{font-family:'Press Start 2P';font-size:13px;color:var(--neon-mag);margin:0 0 10px;text-align:center}
+#adminModal label{display:block;font-size:12px;color:var(--muted);margin-top:8px}
+#adminModal input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:inherit;margin-top:4px}
+#adminModal .btn{margin-top:10px;width:100%}
+#adminModal .close{position:absolute;top:10px;right:12px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+  <div class="container">
+    <main class="panel">
+      <h1>★ LOBBY — LOGIN / REGISTRO</h1>
+      <div class="small" style="margin-top:8px">Registra un equipo o inicia sesión. Las contraseñas se guardan solo localmente (hash).</div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="modeRegister" class="btn btn-primary">Registro</button>
+        <button id="modeLogin" class="btn btn-ghost">Iniciar sesión</button>
+      </div>
+
+      <!-- Registro -->
+      <form id="formRegister" style="margin-top:12px">
+        <label>Nombre del equipo</label>
+        <input id="regName" type="text" placeholder="Ej: Los Frontenders" autocomplete="off" />
+        <label>Contraseña</label>
+        <input id="regPass" type="password" placeholder="Contraseña segura" />
+        <label>Miembros (separados por coma)</label>
+        <input id="regMembers" type="text" placeholder="Ana, Luis, María" />
+
+        <label style="margin-top:12px">Selecciona tu avatar</label>
+        <div class="avatar-grid" id="avatarGrid">
+          <!-- Avatares (usa avatars/avatar1.png ... avatar8.png) -->
+          <div class="avatar-option" data-src="avatars/avatar1.png"><img src="avatars/avatar1.png" alt="avatar1"></div>
+          <div class="avatar-option" data-src="avatars/avatar2.png"><img src="avatars/avatar2.png" alt="avatar2"></div>
+          <div class="avatar-option" data-src="avatars/avatar3.png"><img src="avatars/avatar3.png" alt="avatar3"></div>
+          <div class="avatar-option" data-src="avatars/avatar4.png"><img src="avatars/avatar4.png" alt="avatar4"></div>
+          <div class="avatar-option" data-src="avatars/avatar5.png"><img src="avatars/avatar5.png" alt="avatar5"></div>
+          <div class="avatar-option" data-src="avatars/avatar6.png"><img src="avatars/avatar6.png" alt="avatar6"></div>
+          <div class="avatar-option" data-src="avatars/avatar7.png"><img src="avatars/avatar7.png" alt="avatar7"></div>
+          <div class="avatar-option" data-src="avatars/avatar8.png"><img src="avatars/avatar8.png" alt="avatar8"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="btnRegister" type="button" class="btn btn-primary">Crear equipo</button>
+          <button id="btnRegisterReset" type="button" class="btn btn-ghost">Limpiar</button>
+        </div>
+        <div class="note">Nota: Si pierdes la contraseña no se puede recuperar (sin servidor).</div>
+        <div id="regError" class="error hidden"></div>
+      </form>
+
+      <!-- Login -->
+      <form id="formLogin" style="display:none;margin-top:12px">
+        <label>Nombre del equipo</label>
+        <input id="logName" type="text" placeholder="Nombre de tu equipo" autocomplete="off" />
+        <label>Contraseña</label>
+        <input id="logPass" type="password" placeholder="Tu contraseña" />
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="btnLogin" type="button" class="btn btn-primary">Entrar</button>
+          <button id="btnLoginReset" type="button" class="btn btn-ghost">Limpiar</button>
+        </div>
+        <div id="logError" class="error hidden"></div>
+      </form>
+
+      <div class="admin-trigger">Presiona <strong>Alt + D</strong> para acceder al panel docente (oculto)</div>
+    </main>
+
+    <aside class="panel">
+      <h1 style="font-size:14px;color:var(--neon-mag);margin-bottom:6px">INFO RÁPIDA</h1>
+      <div class="small">— 6 semanas × 5 avances cada una (L-V).<br>— Progresión por estrellas (participación individual).<br>— Para completar un avance se requiere >=60% de integrantes participando.</div>
+
+      <div style="margin-top:12px">
+        <div class="small" style="font-weight:700;color:var(--neon-cyan)">Privacidad</div>
+        <div class="note">No verás otros equipos. Cada grupo inicia sesión con su nombre + contraseña.</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="small" style="font-weight:700;color:var(--neon-mag)">Export / Import</div>
+        <div class="note">Los equipos pueden exportar PDF desde stages; el docente puede exportar CSV desde su panel.</div>
+      </div>
+    </aside>
+
+    <div class="footer">Hecho: Retro Arcade 80s — Autenticación local (salt + SHA-256)</div>
+  </div>
+
+  <!-- === Overlay y modal docente (Alt+D) === -->
+  <div id="adminOverlay">
+    <div id="adminModal" role="dialog" aria-modal="true">
+      <button class="close" id="adminClose">✕</button>
+      <h3>ACCESO DOCENTE</h3>
+      <label>Usuario</label>
+      <input id="adminUser" type="text" placeholder="Usuario" />
+      <label>Contraseña</label>
+      <input id="adminPass" type="password" placeholder="Contraseña" />
+      <button id="adminLoginBtn" class="btn btn-primary">Entrar</button>
+      <button id="adminCancel" class="btn btn-ghost">Cancelar</button>
+      <div id="adminError" class="error hidden" style="text-align:center;margin-top:8px"></div>
+    </div>
+  </div>
+
+<script>
+/* ===== Config ===== */
+const STORAGE_KEY = 'aula_gamificada_teams_v1';
+const SELECTED_KEY = 'aula_gamificada_selected';
+const WEEKS = 6, PER_WEEK = 5;
+
+/* Admin credentials */
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'B3_2025';
+
+/* ===== Utils crypto & storage ===== */
+function loadTeams(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]') }catch(e){ return [] } }
+function saveTeams(t){ localStorage.setItem(STORAGE_KEY, JSON.stringify(t)) }
+function uid(){ return 't_' + Math.random().toString(36).slice(2,9) }
+function toBase64(u8){ return btoa(String.fromCharCode(...u8)); }
+function fromBase64(b64){ return Uint8Array.from(atob(b64), c=>c.charCodeAt(0)); }
+function toHex(buffer){ return Array.from(new Uint8Array(buffer)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+
+/* SHA-256 hashing with salt */
+async function hashPassword(password, saltBytes){
+  const enc = new TextEncoder();
+  const passBytes = enc.encode(password);
+  const data = new Uint8Array(saltBytes.length + passBytes.length);
+  data.set(saltBytes, 0);
+  data.set(passBytes, saltBytes.length);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return toHex(hash);
+}
+function genSalt(){ const s = new Uint8Array(16); crypto.getRandomValues(s); return s; }
+
+/* ===== DOM refs ===== */
+const modeRegisterBtn = document.getElementById('modeRegister');
+const modeLoginBtn = document.getElementById('modeLogin');
+const formRegister = document.getElementById('formRegister');
+const formLogin = document.getElementById('formLogin');
+const regName = document.getElementById('regName');
+const regPass = document.getElementById('regPass');
+const regMembers = document.getElementById('regMembers');
+const avatarGrid = document.getElementById('avatarGrid');
+let selectedAvatar = 'avatars/avatar1.png';
+const btnRegister = document.getElementById('btnRegister');
+const btnRegisterReset = document.getElementById('btnRegisterReset');
+const regError = document.getElementById('regError');
+const logName = document.getElementById('logName');
+const logPass = document.getElementById('logPass');
+const btnLogin = document.getElementById('btnLogin');
+const btnLoginReset = document.getElementById('btnLoginReset');
+const logError = document.getElementById('logError');
+/* admin modal refs */
+const adminOverlay = document.getElementById('adminOverlay');
+const adminUser = document.getElementById('adminUser');
+const adminPass = document.getElementById('adminPass');
+const adminLoginBtn = document.getElementById('adminLoginBtn');
+const adminCancel = document.getElementById('adminCancel');
+const adminClose = document.getElementById('adminClose');
+const adminError = document.getElementById('adminError');
+
+/* ===== UI toggles ===== */
+modeRegisterBtn.onclick = () => { formRegister.style.display='block'; formLogin.style.display='none'; regError.classList.add('hidden'); logError.classList.add('hidden'); }
+modeLoginBtn.onclick = () => { formRegister.style.display='none'; formLogin.style.display='block'; regError.classList.add('hidden'); logError.classList.add('hidden'); }
+
+/* ===== Avatar selection ===== */
+document.querySelectorAll('.avatar-option').forEach(el=>{
+  el.addEventListener('click', ()=> {
+    document.querySelectorAll('.avatar-option').forEach(i=>i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedAvatar = el.getAttribute('data-src');
+  });
+});
+document.querySelector('.avatar-option')?.classList.add('selected');
+
+/* ===== Register logic ===== */
+btnRegisterReset.onclick = () => { regName.value=''; regPass.value=''; regMembers.value=''; regError.classList.add('hidden'); document.querySelectorAll('.avatar-option').forEach(i=>i.classList.remove('selected')); selectedAvatar='avatars/avatar1.png'; document.querySelector('.avatar-option')?.classList.add('selected'); }
+btnRegister.onclick = async () => {
+  regError.classList.add('hidden');
+  const name = (regName.value||'').trim();
+  const pass = regPass.value || '';
+  const membersRaw = (regMembers.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!name){ regError.textContent='Escribe un nombre para el equipo.'; regError.classList.remove('hidden'); return; }
+  if(pass.length < 4){ regError.textContent='La contraseña debe tener al menos 4 caracteres.'; regError.classList.remove('hidden'); return; }
+  if(membersRaw.length === 0){ regError.textContent='Añade al menos 1 integrante.'; regError.classList.remove('hidden'); return; }
+  if(membersRaw.length > 4){ regError.textContent='Máx. 4 integrantes permitidos.'; regError.classList.remove('hidden'); return; }
+
+  const teams = loadTeams();
+  if(teams.some(t => t.name.toLowerCase() === name.toLowerCase())){
+    regError.textContent = 'Ya existe un equipo con ese nombre. Elige otro.'; regError.classList.remove('hidden'); return;
+  }
+
+  // create salt & hash & codesIndividuales (weeks x days x members)
+  const salt = genSalt();
+  const pwdHash = await hashPassword(pass, salt);
+
+  const codesIndividuales = {};
+  for(let w=1; w<=WEEKS; w++){
+    const weekKey = 'Semana' + w;
+    codesIndividuales[weekKey] = {};
+    for(let d=0; d<PER_WEEK; d++){
+      const dayName = ['Lunes','Martes','Miércoles','Jueves','Viernes'][d];
+      codesIndividuales[weekKey][dayName] = {};
+      membersRaw.forEach(m=>{
+        codesIndividuales[weekKey][dayName][m] = String(Math.floor(1000 + Math.random()*9000));
+      });
+    }
+  }
+
+  // weeks structure: array of weeks, each week has days array with progress object
+  const weeks = Array.from({length:WEEKS}).map(() => ({
+    days: Array.from({length:PER_WEEK}).map(() => ({
+      progress: {}, // member -> boolean (filled later)
+      stars: 0,
+      completed: false
+    }))
+  }));
+
+  // initialize progress objects
+  weeks.forEach(week => {
+    week.days.forEach(day => {
+      membersRaw.forEach(m => day.progress[m] = false);
+    });
+  });
+
+  const team = {
+    id: uid(),
+    name,
+    members: membersRaw,
+    avatar: selectedAvatar,
+    // auth
+    pwdHash, salt: toBase64(salt),
+    // game state
+    pointsPerMember: membersRaw.reduce((acc,m)=>{acc[m]=0;return acc;},{})
+    , // optional numeric points (kept but not primary)
+    level: 1,
+    weeks,
+    badges: [],
+    codesIndividuales,
+    createdAt: Date.now()
+  };
+
+  teams.push(team);
+  saveTeams(teams);
+
+  // set session and redirect
+  localStorage.setItem(SELECTED_KEY, team.id);
+  alert('Equipo creado. Redirigiendo a Stages...');
+  location.href = 'stages.html';
+};
+
+/* ===== Login logic ===== */
+btnLoginReset.onclick = () => { logName.value=''; logPass.value=''; logError.classList.add('hidden'); }
+btnLogin.onclick = async () => {
+  logError.classList.add('hidden');
+  const name = (logName.value||'').trim();
+  const pass = logPass.value || '';
+  if(!name || !pass){ logError.textContent = 'Completa nombre y contraseña.'; logError.classList.remove('hidden'); return; }
+  const teams = loadTeams();
+  const t = teams.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if(!t){ logError.textContent = 'Equipo no encontrado.'; logError.classList.remove('hidden'); return; }
+  try{
+    const saltBytes = fromBase64(t.salt);
+    const h = await hashPassword(pass, saltBytes);
+    if(h === t.pwdHash){
+      localStorage.setItem(SELECTED_KEY, t.id);
+      alert('Acceso correcto. Redirigiendo...');
+      location.href = 'stages.html';
+    } else {
+      logError.textContent = 'Contraseña incorrecta.'; logError.classList.remove('hidden');
+    }
+  }catch(e){
+    logError.textContent = 'Error durante autenticación.'; logError.classList.remove('hidden');
+  }
+};
+
+/* ===== Admin modal (Alt+D) ===== */
+function showAdminModal(){ adminOverlay.style.display='flex'; adminError.classList.add('hidden'); adminUser.value=''; adminPass.value=''; }
+function hideAdminModal(){ adminOverlay.style.display='none'; }
+
+document.addEventListener('keydown', (e) => {
+  if(e.altKey && (e.key === 'd' || e.key === 'D')){ e.preventDefault(); showAdminModal(); }
+});
+adminCancel.onclick = adminClose.onclick = hideAdminModal;
+adminLoginBtn.onclick = () => {
+  const u = (adminUser.value||'').trim();
+  const p = adminPass.value || '';
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    hideAdminModal(); localStorage.setItem('aula_admin_logged','1'); location.href = 'admin.html';
+  } else {
+    adminError.textContent = 'Credenciales inválidas'; adminError.classList.remove('hidden');
+  }
+};
+</script>
+</body>
+</html>

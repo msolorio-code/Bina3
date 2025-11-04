@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Docente — Aula Gamificada</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#04102a;
+  --neon-cyan:#00f0ff;
+  --neon-mag:#ff4dd2;
+  --muted:#9fb4d8;
+}
+*{box-sizing:border-box}
+body {
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:#e6f7ff;
+  margin:0;
+  min-height:100vh;
+  background-image:linear-gradient(0deg,rgba(255,255,255,0.02)1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,0.01)1px,transparent 1px);
+  background-size:4px 4px;
+}
+.container{max-width:1100px;margin:30px auto;padding:20px}
+h1 {
+  font-family:'Press Start 2P';
+  color:var(--neon-cyan);
+  font-size:16px;
+  text-align:center;
+  margin-bottom:20px;
+}
+.header-actions {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:16px;
+}
+.btn {
+  border:none;
+  border-radius:8px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-family:'Press Start 2P';
+  font-size:10px;
+}
+.btn-primary {
+  background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));
+  color:#041025;
+}
+.btn-ghost {
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--muted);
+}
+.table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  font-size:13px;
+}
+.table th,.table td {
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.table th {color:var(--neon-cyan)}
+.avatar-sm {
+  width:40px;height:40px;border-radius:6px;
+  overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;
+}
+.avatar-sm img {width:100%;height:100%;image-rendering:pixelated}
+.modal {
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.7);z-index:1000;
+}
+.modal-content {
+  background:#061835;
+  border:2px solid rgba(0,240,255,0.3);
+  border-radius:10px;
+  box-shadow:0 0 20px rgba(0,240,255,0.3);
+  padding:20px;
+  max-width:760px;width:92%;
+  color:#e6f7ff;
+  max-height:90vh;overflow:auto;
+}
+.modal-content h3 {
+  font-family:'Press Start 2P';
+  font-size:13px;
+  color:var(--neon-mag);
+  margin-top:0;
+  text-align:center;
+}
+.close {
+  position:absolute;
+  top:10px;right:16px;
+  font-size:18px;
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+}
+.footer{text-align:center;margin-top:20px;color:var(--muted);font-size:11px}
+.code-card {
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.03);
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:0 0 8px rgba(0,240,255,0.1);
+}
+.code-card h4 {
+  margin:0 0 8px 0;
+  color:var(--neon-cyan);
+  font-family:'Press Start 2P';
+  font-size:11px;
+}
+.code-card .integrante {
+  display:flex;justify-content:space-between;
+  font-size:12px;
+  padding:2px 0;
+}
+.code-card .integrante span {
+  color:var(--neon-mag);
+  font-family:'Press Start 2P';
+  font-size:10px;
+}
+.code-card .meta {
+  display:flex;justify-content:space-between;
+  font-size:11px;
+  margin-top:6px;
+  color:var(--muted);
+}
+.week-title {
+  font-family:'Press Start 2P';
+  color:var(--neon-mag);
+  font-size:12px;
+  margin:12px 0 6px;
+  text-shadow:0 0 4px var(--neon-mag);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧠 PANEL DOCENTE</h1>
+  <div class="header-actions">
+    <button id="exportTeamsBtn" class="btn btn-primary">EXPORTAR EQUIPOS</button>
+    <button id="exportCodesBtn" class="btn btn-primary">EXPORTAR CÓDIGOS</button>
+    <button id="exportStarsBtn" class="btn btn-primary">EXPORTAR ESTRELLAS</button>
+    <button id="logoutBtn" class="btn btn-ghost">CERRAR SESIÓN</button>
+  </div>
+
+  <table class="table" id="teamsTable">
+    <thead><tr><th>Equipo</th><th>Integrantes</th><th>Estrellas totales</th><th>Acciones</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="footer">🎮 Retro Arcade — Panel docente</div>
+</div>
+
+<!-- Modal de Códigos -->
+<div id="codesModal" class="modal">
+  <div class="modal-content">
+    <button class="close" id="closeCodesBtn">✕</button>
+    <h3>CÓDIGOS INDIVIDUALES — <span id="codesModalTitle"></span></h3>
+    <div id="codesContent" style="font-size:13px;color:var(--muted)"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+      <button id="regenCodesBtn" class="btn btn-primary">REGENERAR CÓDIGOS</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='aula_gamificada_teams_v1';
+const ADMIN_FLAG='aula_admin_logged';
+if(!localStorage.getItem(ADMIN_FLAG)){alert('Acceso no autorizado.');location.href='index.html';throw new Error('No admin');}
+
+function loadTeams(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch(e){return[]}}
+function saveTeams(t){localStorage.setItem(STORAGE_KEY,JSON.stringify(t))}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function downloadCSV(name,txt){const b=new Blob([txt],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function calcStars(t){if(!t.weeks)return 0;let s=0;t.weeks.forEach(w=>w.days.forEach(d=>s+=d.stars||0));return s;}
+
+const tbody=document.querySelector('#teamsTable tbody');
+const codesModal=document.getElementById('codesModal');
+const closeCodesBtn=document.getElementById('closeCodesBtn');
+const codesModalTitle=document.getElementById('codesModalTitle');
+const codesContent=document.getElementById('codesContent');
+const regenCodesBtn=document.getElementById('regenCodesBtn');
+const exportTeamsBtn=document.getElementById('exportTeamsBtn');
+const exportCodesBtn=document.getElementById('exportCodesBtn');
+const exportStarsBtn=document.getElementById('exportStarsBtn');
+const logoutBtn=document.getElementById('logoutBtn');
+
+let teams=loadTeams(),viewingTeamId=null;
+function render(){
+  teams=loadTeams();tbody.innerHTML='';
+  if(!teams.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted)">Sin equipos</td></tr>';return;
+  }
+  teams.forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="avatar-sm"><img src="${esc(t.avatar||'avatars/avatar1.png')}"></span><strong style="color:var(--neon-cyan)">${esc(t.name)}</strong></td>
+    <td>${esc((t.members||[]).join(', '))}</td><td>${calcStars(t)}</td>
+    <td><button class="btn btn-primary" data-codes="${t.id}">Ver Códigos</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('[data-codes]').forEach(b=>b.onclick=()=>openCodes(b.dataset.codes));
+}
+
+function openCodes(id){
+  viewingTeamId=id;
+  const t=teams.find(x=>x.id===id);
+  if(!t)return;
+  codesModalTitle.textContent=t.name;
+  let html='';
+  for(let w=0;w<(t.weeks||[]).length;w++){
+    html+=`<div class="week-title">SEMANA ${w+1}</div>`;
+    for(let d=0;d<5;d++){
+      const dayName=['Lunes','Martes','Miércoles','Jueves','Viernes'][d];
+      const day=t.weeks[w].days[d];
+      const codes=t.codesIndividuales?.['Semana'+(w+1)]?.[dayName]||{};
+      const completed=day.completed?'✅ Completado':'❌ Pendiente';
+      html+=`<div class="code-card">
+        <h4>${dayName}</h4>
+        ${(t.members||[]).map(m=>`
+          <div class="integrante">
+            <div>${m}</div>
+            <span>${codes[m]||'—'}</span>
+          </div>
+        `).join('')}
+        <div class="meta"><div>${'⭐'.repeat(day.stars||0)}</div><div>${completed}</div></div>
+      </div>`;
+    }
+  }
+  codesContent.innerHTML=html;
+  codesModal.style.display='flex';
+}
+closeCodesBtn.onclick=()=>codesModal.style.display='none';
+regenCodesBtn.onclick=()=>{
+  if(!viewingTeamId)return;
+  const t=teams.find(x=>x.id===viewingTeamId);
+  if(!t)return;
+  if(!confirm('¿Regenerar todos los códigos individuales?'))return;
+  for(let w=1;w<=6;w++){
+    const wk='Semana'+w;
+    t.codesIndividuales[wk]={};
+    for(let d=0;d<5;d++){
+      const day=['Lunes','Martes','Miércoles','Jueves','Viernes'][d];
+      t.codesIndividuales[wk][day]={};
+      (t.members||[]).forEach(m=>{
+        t.codesIndividuales[wk][day][m]=String(Math.floor(1000+Math.random()*9000));
+      });
+    }
+  }
+  saveTeams(teams);
+  openCodes(viewingTeamId);
+  alert('✅ Códigos regenerados');
+}
+
+exportTeamsBtn.onclick=()=>{
+  const r=[['Equipo','Integrantes']];
+  teams.forEach(t=>r.push([t.name,(t.members||[]).join(';')]));
+  downloadCSV('equipos.csv',r.map(a=>a.join(',')).join('\n'));
+};
+exportCodesBtn.onclick=()=>{
+  const r=[['Equipo','Semana','Día','Integrante','Código']];
+  teams.forEach(t=>{
+    for(let w=1;w<=6;w++){
+      for(let d=0;d<5;d++){
+        const day=['Lunes','Martes','Miércoles','Jueves','Viernes'][d];
+        (t.members||[]).forEach(m=>{
+          r.push([t.name,'Semana '+w,day,m,t.codesIndividuales?.['Semana'+w]?.[day]?.[m]||'']);
+        });
+      }
+    }
+  });
+  downloadCSV('codigos.csv',r.map(a=>a.join(',')).join('\n'));
+};
+exportStarsBtn.onclick=()=>{
+  const r=[['Equipo','Semana','Día','⭐','Completado']];
+  teams.forEach(t=>{
+    for(let w=0;w<6;w++){
+      for(let d=0;d<5;d++){
+        const day=t.weeks[w].days[d];
+        r.push([t.name,'Semana '+(w+1),['Lun','Mar','Mi','Jue','Vie'][d],day.stars,day.completed?'Sí':'No']);
+      }
+    }
+  });
+  downloadCSV('estrellas.csv',r.map(a=>a.join(',')).join('\n'));
+};
+logoutBtn.onclick=()=>{
+  localStorage.removeItem(ADMIN_FLAG);
+  location.href='index.html';
+};
+render();
+</script>
+</body>
+</html>
