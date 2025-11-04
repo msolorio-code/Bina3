@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Prueba tu conocimiento</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #111;
+    color: #00ffcc;
+    text-align: center;
+    padding: 20px;
+  }
+  table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    width: 80%;
+    max-width: 700px;
+  }
+  th, td {
+    border: 2px solid #00ffff;
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+  }
+  select {
+    padding: 5px;
+    font-size: 16px;
+    background-color: #111;
+    color: #00ffcc;
+    border: 1px solid #00ffff;
+    width: 150px;
+    text-align: center;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ff00ff;
+    color: #fff;
+    border: none;
+    box-shadow: 0 0 10px #ff00ff;
+  }
+  #message {
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  #score {
+    margin-top: 10px;
+    font-size: 18px;
+    color: #00ffff;
+  }
+  #footer {
+    margin-top: 40px;
+    font-size: 14px;
+    color: #888;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎮 Tabla de Conceptos Web - Puntos 🎮</h1>
+<p>Selecciona la función correcta para cada tecnología:</p>
+
+<table>
+  <tr>
+    <th>HTML</th>
+    <th>CSS</th>
+    <th>JavaScript</th>
+  </tr>
+  <tr>
+    <td>
+      <select id="htmlSelect">
+        <option value="">--Selecciona--</option>
+        <option value="estructura">Esqueleto de la página</option>
+        <option value="estilo">Colorea la página</option>
+        <option value="interacción">Hace que los botones funcionen</option>
+      </select>
+    </td>
+    <td>
+      <select id="cssSelect">
+        <option value="">--Selecciona--</option>
+        <option value="estructura">Esqueleto de la página</option>
+        <option value="estilo">Colorea la página</option>
+        <option value="interacción">Hace que los botones funcionen</option>
+      </select>
+    </td>
+    <td>
+      <select id="jsSelect">
+        <option value="">--Selecciona--</option>
+        <option value="estructura">Esqueleto de la página</option>
+        <option value="estilo">Colorea la página</option>
+        <option value="interacción">Hace que los botones funcionen</option>
+      </select>
+    </td>
+  </tr>
+</table>
+
+<button onclick="checkAnswer()">Verificar</button>
+
+<div id="message"></div>
+<div id="score">Puntaje: 0</div>
+
+<!-- Audios de acierto y error -->
+<audio id="soundCorrect">
+  <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3" type="audio/mpeg">
+</audio>
+<audio id="soundWrong">
+  <source src="https://www.soundjay.com/buttons/sounds/button-10.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const answers = { html:'estructura', css:'estilo', js:'interacción' };
+let totalScore = 0; // puntaje acumulado
+
+function checkAnswer() {
+  const htmlVal = document.getElementById('htmlSelect').value;
+  const cssVal = document.getElementById('cssSelect').value;
+  const jsVal = document.getElementById('jsSelect').value;
+  const message = document.getElementById('message');
+  const scoreDisplay = document.getElementById('score');
+  const soundCorrect = document.getElementById('soundCorrect');
+  const soundWrong = document.getElementById('soundWrong');
+
+  let roundScore = 0;
+
+  if(htmlVal === answers.html) roundScore++;
+  if(cssVal === answers.css) roundScore++;
+  if(jsVal === answers.js) roundScore++;
+
+  if(roundScore === 3) {
+    message.style.color = '#00ff00';
+    message.textContent = '¡Excelente! Todas las respuestas son correctas 🎉';
+    soundCorrect.play();
+  } else {
+    message.style.color = '#ff0000';
+    message.textContent = `Has acertado ${roundScore}/3. Intenta de nuevo.`;
+    soundWrong.play();
+  }
+
+  totalScore += roundScore; // sumar puntos
+  scoreDisplay.textContent = `Puntaje: ${totalScore}`;
+}
+</script>
+
+<div id="footer">by Mayela Solorio & OpenAI</div>
+
+</body>
+</html>
